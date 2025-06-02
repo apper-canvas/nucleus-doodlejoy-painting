@@ -1,6 +1,6 @@
 import { forwardRef, useEffect, useState, useCallback } from 'react';
 import { canvasConfig } from '../../constants/canvasConfig';
-import { getCanvasCoordinates } from '../../utils/canvasUtils';
+import { getCanvasCoordinates, floodFill, drawRectangle, drawCircle, drawLine } from '../../utils/canvasUtils';
 
 /**
  * @ai-context Main drawing canvas component with mouse and touch drawing support
@@ -10,12 +10,14 @@ import { getCanvasCoordinates } from '../../utils/canvasUtils';
 const DrawingCanvas = forwardRef(({ 
   brushColor, 
   brushSize, 
+  activeTool = 'brush',
   onDrawingStart, 
   onDrawingEnd 
 }, ref) => {
-  const [isDrawing, setIsDrawing] = useState(false);
+const [isDrawing, setIsDrawing] = useState(false);
   const [lastPosition, setLastPosition] = useState({ x: 0, y: 0 });
-
+  const [startPosition, setStartPosition] = useState({ x: 0, y: 0 });
+  const [previewCanvas, setPreviewCanvas] = useState(null);
   // Setup canvas when component mounts
   useEffect(() => {
     const canvas = ref.current;
@@ -39,17 +41,35 @@ const DrawingCanvas = forwardRef(({
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }, [ref]);
 
-  const startDrawing = useCallback((e) => {
+const startDrawing = useCallback((e) => {
     const canvas = ref.current;
     if (!canvas) return;
 
-    setIsDrawing(true);
     const coords = getCanvasCoordinates(e, canvas);
-    setLastPosition(coords);
-    onDrawingStart?.();
-  }, [ref, onDrawingStart]);
+    
+    // Handle fill tool
+    if (activeTool === 'fill') {
+      floodFill(canvas, coords.x, coords.y, brushColor);
+      onDrawingStart?.();
+      onDrawingEnd?.();
+      return;
+    }
 
-  const draw = useCallback((e) => {
+    setIsDrawing(true);
+    setLastPosition(coords);
+    setStartPosition(coords);
+    
+    // Create preview canvas for shape tools
+    if (['rectangle', 'circle', 'line'].includes(activeTool)) {
+      const ctx = canvas.getContext('2d');
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      setPreviewCanvas(imageData);
+    }
+    
+    onDrawingStart?.();
+  }, [ref, activeTool, brushColor, onDrawingStart, onDrawingEnd]);
+
+const draw = useCallback((e) => {
     if (!isDrawing) return;
     
     const canvas = ref.current;
@@ -58,21 +78,46 @@ const DrawingCanvas = forwardRef(({
     const ctx = canvas.getContext('2d');
     const coords = getCanvasCoordinates(e, canvas);
 
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.strokeStyle = brushColor;
-    ctx.lineWidth = brushSize;
-    
-    ctx.beginPath();
-    ctx.moveTo(lastPosition.x, lastPosition.y);
-    ctx.lineTo(coords.x, coords.y);
-    ctx.stroke();
-    
-    setLastPosition(coords);
-  }, [isDrawing, ref, brushColor, brushSize, lastPosition]);
+    if (activeTool === 'brush') {
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.strokeStyle = brushColor;
+      ctx.lineWidth = brushSize;
+      
+      ctx.beginPath();
+      ctx.moveTo(lastPosition.x, lastPosition.y);
+      ctx.lineTo(coords.x, coords.y);
+      ctx.stroke();
+      
+      setLastPosition(coords);
+    } else if (activeTool === 'eraser') {
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.lineWidth = brushSize;
+      
+      ctx.beginPath();
+      ctx.moveTo(lastPosition.x, lastPosition.y);
+      ctx.lineTo(coords.x, coords.y);
+      ctx.stroke();
+      
+      setLastPosition(coords);
+    } else if (['rectangle', 'circle', 'line'].includes(activeTool) && previewCanvas) {
+      // Restore original canvas for preview
+      ctx.putImageData(previewCanvas, 0, 0);
+      
+      // Draw preview shape
+      if (activeTool === 'rectangle') {
+        drawRectangle(ctx, startPosition.x, startPosition.y, coords.x, coords.y, brushColor, brushSize);
+      } else if (activeTool === 'circle') {
+        drawCircle(ctx, startPosition.x, startPosition.y, coords.x, coords.y, brushColor, brushSize);
+      } else if (activeTool === 'line') {
+        drawLine(ctx, startPosition.x, startPosition.y, coords.x, coords.y, brushColor, brushSize);
+      }
+    }
+  }, [isDrawing, ref, activeTool, brushColor, brushSize, lastPosition, startPosition, previewCanvas]);
 
-  const stopDrawing = useCallback(() => {
+const stopDrawing = useCallback(() => {
     if (isDrawing) {
       setIsDrawing(false);
+      setPreviewCanvas(null);
       onDrawingEnd?.();
     }
   }, [isDrawing, onDrawingEnd]);

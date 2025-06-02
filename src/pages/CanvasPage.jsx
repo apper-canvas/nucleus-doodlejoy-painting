@@ -161,11 +161,12 @@ const handleBackToHome = () => {
               activeTool={activeTool}
               onToolChange={handleToolChange}
             />
-            <CardContent className="p-0">
+<CardContent className="p-0">
               <DrawingCanvas
                 ref={canvasRef}
                 brushColor={brushColor}
                 brushSize={brushSize}
+                activeTool={activeTool}
                 onDrawingStart={() => setIsDrawing(true)}
                 onDrawingEnd={() => setIsDrawing(false)}
               />
