@@ -1,23 +1,23 @@
-import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { toast } from 'react-toastify';
-import DrawingCanvas from '../components/features/DrawingCanvas';
-import ColorPalette from '../components/features/ColorPalette';
-import BrushControls from '../components/features/BrushControls';
-import CanvasActions from '../components/features/CanvasActions';
-import CanvasToolbar from '../components/features/CanvasToolbar';
-import ThemeToggle from '../components/layout/ThemeToggle';
-import { Button } from '../components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import ApperIcon from '../components/ApperIcon';
-import { brushSettings } from '../constants/canvasConfig';
-import { downloadCanvas, clearCanvas } from '../utils/canvasUtils';
+import { useState, useRef, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import { toast } from 'react-toastify'
+import DrawingCanvas from '../components/features/DrawingCanvas'
+import ColorPalette from '../components/features/ColorPalette'
+import BrushControls from '../components/features/BrushControls'
+import CanvasActions from '../components/features/CanvasActions'
+import CanvasToolbar from '../components/features/CanvasToolbar'
+import ThemeToggle from '../components/layout/ThemeToggle'
+import { Button } from '../components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
+import ApperIcon from '../components/ApperIcon'
+import { brushSettings } from '../constants/canvasConfig'
+import { downloadCanvas, clearCanvas } from '../utils/canvasUtils'
 
-const CanvasPage = () => {
-  const navigate = useNavigate();
-  const canvasRef = useRef(null);
-  const [brushColor, setBrushColor] = useState(brushSettings.defaultColor);
+function CanvasPage() {
+  const navigate = useNavigate()
+  const canvasRef = useRef(null)
+  const [canUndo, setCanUndo] = useState(false)
   const [brushSize, setBrushSize] = useState(brushSettings.defaultSize);
   const [isDrawing, setIsDrawing] = useState(false);
   const [activeTool, setActiveTool] = useState('brush');
@@ -32,33 +32,43 @@ const CanvasPage = () => {
     }
   }, []);
 
-  const handleClearCanvas = () => {
-    if (canvasRef.current) {
-      clearCanvas(canvasRef.current);
-      toast.success('Canvas cleared! Time for a fresh start 🎨');
-    }
-  };
+const [brushColor, setBrushColor] = useState('#000000');
 
-  const handleDownloadCanvas = () => {
-    if (canvasRef.current) {
-      downloadCanvas(canvasRef.current, 'my-artwork');
-      toast.success('Your masterpiece has been downloaded! 🖼️');
+  function handleClearCanvas() {
+    const canvas = canvasRef.current
+    if (canvas) {
+      clearCanvas(canvas)
+      setCanUndo(false)
+      toast.success('Canvas cleared! 🧹')
     }
-  };
+  }
 
-const handleBackToHome = () => {
-    navigate('/');
-  };
-
-  const handleToolChange = (tool) => {
-    if (tool) {
-      setActiveTool(tool);
-      toast.info(`Switched to ${tool} tool! 🛠️`);
+  function handleDownloadCanvas() {
+    const canvas = canvasRef.current
+    if (canvas) {
+      downloadCanvas(canvas, 'my-doodle')
+      toast.success('Artwork downloaded! 🎨')
     }
-  };
+  }
+
+  function handleUndo() {
+    if (canvasRef.current && canvasRef.current.undo) {
+      canvasRef.current.undo()
+      toast.info('Action undone! ↶')
+    }
+  }
+
+  function handleBackToHome() {
+    navigate('/')
+  }
+
+  function handleToolChange(tool) {
+    setActiveTool(tool)
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-accent/10 p-4">
-      {/* Header */}
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900 p-6">
+{/* Header */}
       <motion.div
         className="flex items-center justify-between mb-6"
         initial={{ opacity: 0, y: -20 }}
@@ -97,8 +107,8 @@ const handleBackToHome = () => {
             </CardHeader>
             <CardContent>
               <ColorPalette
-                selectedColor={brushColor}
-                onColorChange={setBrushColor}
+                value={brushColor}
+                onChange={setBrushColor}
               />
             </CardContent>
           </Card>
@@ -108,19 +118,17 @@ const handleBackToHome = () => {
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <ApperIcon name="Brush" size={20} />
-                Brush Size
+                Brush
               </CardTitle>
             </CardHeader>
             <CardContent>
               <BrushControls
                 brushSize={brushSize}
                 onBrushSizeChange={setBrushSize}
-                brushColor={brushColor}
               />
             </CardContent>
           </Card>
-
-          {/* Canvas Actions */}
+{/* Canvas Actions */}
           <Card className="tool-panel">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg">
@@ -132,36 +140,25 @@ const handleBackToHome = () => {
               <CanvasActions
                 onClear={handleClearCanvas}
                 onDownload={handleDownloadCanvas}
+                onUndo={handleUndo}
+                canUndo={canUndo}
               />
             </CardContent>
           </Card>
-
-          {/* Drawing Status */}
-          <Card className="tool-panel">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className={`w-3 h-3 rounded-full ${isDrawing ? 'bg-green-500 animate-pulse' : 'bg-muted-foreground'}`} />
-                <span className="text-sm text-muted-foreground">
-                  {isDrawing ? 'Drawing...' : 'Ready to draw'}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
         </motion.div>
-
-        {/* Canvas Area */}
+{/* Canvas Area */}
         <motion.div
           className="lg:col-span-3"
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6, delay: 0.4 }}
->
+        >
           <Card className="canvas-container overflow-hidden">
             <CanvasToolbar 
               activeTool={activeTool}
               onToolChange={handleToolChange}
             />
-<CardContent className="p-0">
+            <CardContent className="p-0">
               <DrawingCanvas
                 ref={canvasRef}
                 brushColor={brushColor}
@@ -169,11 +166,11 @@ const handleBackToHome = () => {
                 activeTool={activeTool}
                 onDrawingStart={() => setIsDrawing(true)}
                 onDrawingEnd={() => setIsDrawing(false)}
+                onCanUndoChange={setCanUndo}
               />
             </CardContent>
           </Card>
-
-          {/* Canvas Info */}
+{/* Canvas Info */}
           <motion.div
             className="mt-4 text-center"
             initial={{ opacity: 0 }}
@@ -188,6 +185,6 @@ const handleBackToHome = () => {
       </div>
     </div>
   );
-};
+}
 
 export default CanvasPage;

@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useState, useCallback } from 'react';
+import { forwardRef, useEffect, useState, useCallback, useImperativeHandle } from 'react';
 import { canvasConfig } from '../../constants/canvasConfig';
 import { getCanvasCoordinates, floodFill, drawRectangle, drawCircle, drawLine } from '../../utils/canvasUtils';
 
@@ -12,12 +12,68 @@ const DrawingCanvas = forwardRef(({
   brushSize, 
   activeTool = 'brush',
   onDrawingStart, 
-  onDrawingEnd 
+  onDrawingEnd,
+  onCanUndoChange
 }, ref) => {
-const [isDrawing, setIsDrawing] = useState(false);
+  const [isDrawing, setIsDrawing] = useState(false);
   const [lastPosition, setLastPosition] = useState({ x: 0, y: 0 });
   const [startPosition, setStartPosition] = useState({ x: 0, y: 0 });
   const [previewCanvas, setPreviewCanvas] = useState(null);
+  const [canvasHistory, setCanvasHistory] = useState([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+// Save canvas state for undo functionality
+  const saveCanvasState = useCallback(() => {
+    const canvas = ref.current;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    
+    setCanvasHistory(prev => {
+      const newHistory = prev.slice(0, historyIndex + 1);
+      newHistory.push(imageData);
+      
+      // Limit history to prevent memory issues
+      if (newHistory.length > 50) {
+        newHistory.shift();
+        return newHistory;
+      }
+      return newHistory;
+    });
+    
+    setHistoryIndex(prev => {
+      const newIndex = Math.min(prev + 1, 49);
+      onCanUndoChange?.(newIndex > 0);
+      return newIndex;
+    });
+  }, [ref, historyIndex, onCanUndoChange]);
+
+  // Undo functionality
+  const undo = useCallback(() => {
+    if (historyIndex <= 0) return;
+    
+    const canvas = ref.current;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    const previousState = canvasHistory[historyIndex - 1];
+    
+    if (previousState) {
+      ctx.putImageData(previousState, 0, 0);
+      setHistoryIndex(prev => {
+        const newIndex = prev - 1;
+        onCanUndoChange?.(newIndex > 0);
+        return newIndex;
+      });
+    }
+  }, [ref, canvasHistory, historyIndex, onCanUndoChange]);
+
+  // Expose undo function to parent
+  useImperativeHandle(ref, () => ({
+    undo,
+    saveCanvasState
+  }), [undo, saveCanvasState]);
+
   // Setup canvas when component mounts
   useEffect(() => {
     const canvas = ref.current;
@@ -39,7 +95,23 @@ const [isDrawing, setIsDrawing] = useState(false);
     ctx.lineJoin = canvasConfig.lineJoin;
     ctx.fillStyle = canvasConfig.backgroundColor;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-  }, [ref]);
+    
+    // Save initial state
+    saveCanvasState();
+  }, [ref, saveCanvasState]);
+
+  // Add keyboard shortcut for undo
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [undo]);
 
 const startDrawing = useCallback((e) => {
     const canvas = ref.current;
@@ -47,9 +119,10 @@ const startDrawing = useCallback((e) => {
 
     const coords = getCanvasCoordinates(e, canvas);
     
-    // Handle fill tool
+// Handle fill tool
     if (activeTool === 'fill') {
       floodFill(canvas, coords.x, coords.y, brushColor);
+      saveCanvasState();
       onDrawingStart?.();
       onDrawingEnd?.();
       return;
@@ -67,7 +140,7 @@ const startDrawing = useCallback((e) => {
     }
     
     onDrawingStart?.();
-  }, [ref, activeTool, brushColor, onDrawingStart, onDrawingEnd]);
+  }, [ref, activeTool, brushColor, onDrawingStart, onDrawingEnd, saveCanvasState]);
 
 const draw = useCallback((e) => {
     if (!isDrawing) return;
@@ -118,9 +191,10 @@ const stopDrawing = useCallback(() => {
     if (isDrawing) {
       setIsDrawing(false);
       setPreviewCanvas(null);
+      saveCanvasState();
       onDrawingEnd?.();
     }
-  }, [isDrawing, onDrawingEnd]);
+  }, [isDrawing, onDrawingEnd, saveCanvasState]);
 
   // Mouse events
   const handleMouseDown = (e) => {
