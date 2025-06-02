@@ -57,9 +57,9 @@ const ColorPalette = ({ selectedColor, onColorChange }) => {
           Current Selection
         </label>
         <div className="flex items-center gap-2">
-          <div
+<div
             className="w-8 h-8 rounded-full border-2 border-white shadow-md"
-            style={{ backgroundColor: selectedColor }}
+            style={{ backgroundColor: selectedColor || '#000000' }}
           />
           <span className="text-sm text-muted-foreground">
             Active brush color
