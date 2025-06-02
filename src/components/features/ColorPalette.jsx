@@ -6,7 +6,7 @@ import { colorPalette } from '../../constants/canvasConfig';
  * @dependencies colorPalette from canvasConfig
  * @modifiable-sections color-grid, custom-color-picker
  */
-const ColorPalette = ({ selectedColor, onColorChange }) => {
+const ColorPalette = ({ selectedColor = '#000000', onColorChange }) => {
   const handleColorClick = (color) => {
     onColorChange(color);
   };
@@ -37,15 +37,15 @@ const ColorPalette = ({ selectedColor, onColorChange }) => {
           Custom Color
         </label>
         <div className="flex items-center gap-3">
-          <input
+<input
             type="color"
-            value={selectedColor}
+            value={selectedColor || '#000000'}
             onChange={(e) => onColorChange(e.target.value)}
             className="w-12 h-12 rounded-lg border-2 border-muted cursor-pointer hover:border-primary transition-colors"
           />
-          <div className="flex-1">
+<div className="flex-1">
             <p className="text-sm font-mono text-muted-foreground">
-              {selectedColor.toUpperCase()}
+              {selectedColor ? selectedColor.toUpperCase() : '#000000'}
             </p>
           </div>
         </div>
@@ -56,8 +56,8 @@ const ColorPalette = ({ selectedColor, onColorChange }) => {
         <label className="text-sm font-medium text-muted-foreground">
           Current Selection
         </label>
-        <div className="flex items-center gap-2">
-<div
+<div className="flex items-center gap-2">
+          <div
             className="w-8 h-8 rounded-full border-2 border-white shadow-md"
             style={{ backgroundColor: selectedColor || '#000000' }}
           />
