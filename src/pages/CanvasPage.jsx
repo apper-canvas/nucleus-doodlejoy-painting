@@ -6,6 +6,7 @@ import DrawingCanvas from '../components/features/DrawingCanvas';
 import ColorPalette from '../components/features/ColorPalette';
 import BrushControls from '../components/features/BrushControls';
 import CanvasActions from '../components/features/CanvasActions';
+import CanvasToolbar from '../components/features/CanvasToolbar';
 import ThemeToggle from '../components/layout/ThemeToggle';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -19,6 +20,7 @@ const CanvasPage = () => {
   const [brushColor, setBrushColor] = useState(brushSettings.defaultColor);
   const [brushSize, setBrushSize] = useState(brushSettings.defaultSize);
   const [isDrawing, setIsDrawing] = useState(false);
+  const [activeTool, setActiveTool] = useState('brush');
 
   useEffect(() => {
     // Initialize canvas when component mounts
@@ -44,10 +46,16 @@ const CanvasPage = () => {
     }
   };
 
-  const handleBackToHome = () => {
+const handleBackToHome = () => {
     navigate('/');
   };
 
+  const handleToolChange = (tool) => {
+    if (tool) {
+      setActiveTool(tool);
+      toast.info(`Switched to ${tool} tool! 🛠️`);
+    }
+  };
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-accent/10 p-4">
       {/* Header */}
@@ -147,8 +155,12 @@ const CanvasPage = () => {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6, delay: 0.4 }}
-        >
+>
           <Card className="canvas-container overflow-hidden">
+            <CanvasToolbar 
+              activeTool={activeTool}
+              onToolChange={handleToolChange}
+            />
             <CardContent className="p-0">
               <DrawingCanvas
                 ref={canvasRef}
