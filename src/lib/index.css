@@ -1,0 +1,169 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 253 100% 98%;
+    --foreground: 260 8% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 260 8% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 260 8% 15%;
+    --primary: 262 100% 70%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 290 25% 95%;
+    --secondary-foreground: 260 8% 15%;
+    --muted: 290 25% 95%;
+    --muted-foreground: 260 5% 45%;
+    --accent: 350 100% 88%;
+    --accent-foreground: 260 8% 15%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 290 25% 90%;
+    --input: 290 25% 90%;
+    --ring: 262 100% 70%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.75rem;
+    
+    /* Artistic theme colors */
+    --canvas-bg: 0 0% 99%;
+    --brush-red: 355 85% 65%;
+    --brush-blue: 210 100% 70%;
+    --brush-green: 145 70% 60%;
+    --brush-yellow: 45 100% 70%;
+    --brush-purple: 270 85% 75%;
+    --brush-orange: 25 100% 70%;
+    
+    --sidebar-background: 290 25% 97%;
+    --sidebar-foreground: 260 8% 25%;
+    --sidebar-primary: 262 100% 70%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 350 100% 92%;
+    --sidebar-accent-foreground: 260 8% 15%;
+    --sidebar-border: 290 25% 85%;
+    --sidebar-ring: 262 100% 70%;
+  }
+  
+  .dark {
+    --background: 260 15% 8%;
+    --foreground: 290 25% 95%;
+    --card: 260 15% 12%;
+    --card-foreground: 290 25% 95%;
+    --popover: 260 15% 12%;
+    --popover-foreground: 290 25% 95%;
+    --primary: 262 100% 75%;
+    --primary-foreground: 260 15% 8%;
+    --secondary: 260 15% 18%;
+    --secondary-foreground: 290 25% 95%;
+    --muted: 260 15% 18%;
+    --muted-foreground: 290 15% 65%;
+    --accent: 350 100% 25%;
+    --accent-foreground: 290 25% 95%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 260 15% 18%;
+    --input: 260 15% 18%;
+    --ring: 262 100% 75%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+    
+    /* Dark mode artistic colors */
+    --canvas-bg: 260 15% 15%;
+    --brush-red: 355 80% 60%;
+    --brush-blue: 210 95% 65%;
+    --brush-green: 145 65% 55%;
+    --brush-yellow: 45 95% 65%;
+    --brush-purple: 270 80% 70%;
+    --brush-orange: 25 95% 65%;
+    
+    --sidebar-background: 260 15% 10%;
+    --sidebar-foreground: 290 25% 90%;
+    --sidebar-primary: 262 100% 75%;
+    --sidebar-primary-foreground: 260 15% 8%;
+    --sidebar-accent: 260 15% 20%;
+    --sidebar-accent-foreground: 290 25% 95%;
+    --sidebar-border: 260 15% 20%;
+    --sidebar-ring: 262 100% 75%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  .canvas-container {
+    @apply relative overflow-hidden rounded-xl shadow-2xl;
+    background: linear-gradient(135deg, hsl(var(--canvas-bg)) 0%, hsl(var(--muted)) 100%);
+  }
+  
+  .drawing-canvas {
+    @apply cursor-crosshair transition-all duration-200;
+    touch-action: none;
+  }
+  
+  .drawing-canvas:active {
+    @apply cursor-none;
+  }
+  
+  .paint-palette {
+    @apply grid grid-cols-6 gap-2 p-3 bg-gradient-to-br from-primary/5 to-accent/10 rounded-xl;
+  }
+  
+  .color-swatch {
+    @apply w-10 h-10 rounded-full border-2 border-white shadow-lg cursor-pointer transition-all duration-200 hover:scale-110 hover:shadow-xl;
+  }
+  
+  .color-swatch.active {
+    @apply ring-4 ring-primary scale-110 shadow-xl;
+  }
+  
+  .tool-panel {
+    @apply bg-gradient-to-br from-card to-muted/50 backdrop-blur-sm border rounded-xl p-4 shadow-lg;
+  }
+  
+  .artistic-button {
+    @apply relative overflow-hidden bg-gradient-to-r from-primary to-accent text-primary-foreground font-medium px-6 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105;
+  }
+  
+  .artistic-button::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-r from-accent to-primary opacity-0 transition-opacity duration-300;
+  }
+  
+  .artistic-button:hover::before {
+    @apply opacity-100;
+  }
+  
+  .artistic-button > * {
+    @apply relative z-10;
+  }
+}
+
+@layer utilities {
+  .paint-splash-bg {
+    background-image: radial-gradient(circle at 20% 80%, hsl(var(--brush-red)) 0%, transparent 50%),
+                      radial-gradient(circle at 80% 20%, hsl(var(--brush-blue)) 0%, transparent 50%),
+                      radial-gradient(circle at 40% 40%, hsl(var(--brush-yellow)) 0%, transparent 50%);
+  }
+  
+  .rainbow-text {
+    background: linear-gradient(45deg, hsl(var(--brush-red)), hsl(var(--brush-orange)), hsl(var(--brush-yellow)), hsl(var(--brush-green)), hsl(var(--brush-blue)), hsl(var(--brush-purple)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
